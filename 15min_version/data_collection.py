@@ -4,9 +4,10 @@ import logging
 import time
 from datetime import datetime, timedelta
 import pytz
+import os
 
 # 1) Configuration
-FMP_API_KEY = "J7E8IP0IRthaJebTxv2MODaeT1uFB6nP"  # <-- Replace with your actual API key
+FMP_API_KEY = os.environ.get("FMP_API_KEY", "")
 FMP_BASE_URL = "https://financialmodelingprep.com/api/v3"
 
 DB_PATH = "stock_data.db"

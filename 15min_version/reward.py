@@ -2,7 +2,6 @@ import sqlite3
 import pandas as pd
 import numpy as np
 import logging
-import math
 from tabulate import tabulate
 
 DB_PATH = "stock_data.db"

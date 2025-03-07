@@ -21,17 +21,11 @@ cur.close()
 conn.close()
 
 app = Flask(__name__)
-app.secret_key = '496386083f0d9a2f4eb5e3c377e4c3d1801a48d10006c0a5268ae69d64c13394'  # Required for flash messages
+app.secret_key = os.getenv('APP_SECRET_KEY')  # Required for flash messages
 
 logging.basicConfig(level=logging.INFO)
 
-VAPID_PRIVATE_KEY = """
------BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgYr0uL+XD4/L0NW76
-PcU1Pj+Qm1dY7Tp03sD/0c7gaKahRANCAAQUtdMTFEi0cN4PT4SBhZ3q+LkGz2H3
-Ek0PLxd0TEmuiTugwyeH8IGK9ZOgLagJMmDzMQexfQopDxyDZx2j4sfH
------END PRIVATE KEY-----
-"""
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY')
 
 VAPID_PUBLIC_KEY = 'BBS10xMUSLRw3g9PhIGFner4uQbPYfcSTQ8vF3RMSa6JO6DDJ4fwgYr1k6AtqAkyYPMxB7F9CikPHINnHaPix8c'
 

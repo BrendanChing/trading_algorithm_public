@@ -1,7 +1,6 @@
 import sqlite3
 import requests
 import pandas as pd
-import numpy as np
 import logging
 import math
 import time
@@ -9,15 +8,14 @@ import pytz
 from datetime import datetime, timedelta
 import schedule
 import threading
-import random
-import joblib
 import traceback
 import xgboost as xgb
 import time as time_module
 from dateutil.relativedelta import relativedelta
 import exchange_calendars as ec
-from hidden_functionality import calculate_atr, calculate_rsi, calculate_features
+from hidden_functionality import calculate_features
 from feature_mapping import REAL_TO_PUBLIC
+import os
 
 # Configure logging
 logging.basicConfig(
@@ -32,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # Configuration Variables
 FMP_BASE_URL = "https://financialmodelingprep.com/api/v3"
-FMP_API_KEY = "J7E8IP0IRthaJebTxv2MODaeT1uFB6nP"
+FMP_API_KEY = os.environ.get("FMP_API_KEY", "")
 LIVE_TABLE = "live_15min"
 PREDICTIONS_TABLE = "predictions_15min"
 SYMBOLS = [
