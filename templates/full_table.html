@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Full Stock Predictions</h1>
+
+<form method="POST" action="/update-portfolio">
+    <label for="portfolio_value">Enter Total Portfolio Value:</label>
+    <input type="number" id="portfolio_value" name="portfolio_value" step="0.1" required>
+    <button type="submit">Update</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Open Price</th>
+            <th>Prediction</th>
+            <th>Stop Loss</th>
+            <th>Take Profit</th>
+            <th>Capital</th>
+        </tr>
+    </thead>
+    <tbody id="predictions-table"></tbody>
+</table>
+<p id="loading-indicator" style="display: none;">Loading...</p> <!-- Optional Loading Indicator -->
+<script>
+    async function fetchPredictions() {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.style.display = 'block'; // Show the loading indicator
+
+        try {
+            const response = await fetch('/predictions');
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+
+            const tableBody = document.getElementById('predictions-table');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            data.forEach(prediction => {
+                // Create a new row for the table using the stop_loss value directly
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${prediction.symbol}</td>
+                    <td>${prediction.date}</td>
+                    <td>${prediction.time}</td>
+                    <td>${prediction.open_price.toFixed(2)}</td>
+                    <td>${prediction.prediction.toFixed(2)}</td>
+                    <td>${prediction.stop_loss.toFixed(2)}</td>
+                    <td>${prediction.take_profit.toFixed(2)}</td>
+                    <td>${prediction.capital_invested.toFixed(2)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching predictions:', error);
+        } finally {
+            loadingIndicator.style.display = 'none'; // Hide the loading indicator
+        }
+    }
+
+    // Fetch predictions immediately and refresh every 5 seconds
+    fetchPredictions();
+    setInterval(fetchPredictions, 5000); // Refresh every 5 seconds
+
+    // Handle portfolio value update
+    document.getElementById('portfolio-form').addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent the page from refreshing
+
+        const portfolioValue = document.getElementById('portfolio-input').value;
+        if (!portfolioValue || portfolioValue <= 0) {
+            alert("Please enter a valid portfolio value.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/update-portfolio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ total_portfolio: portfolioValue })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert(`Portfolio value updated to $${result.total_portfolio}`);
+                // Re-fetch predictions to reflect updated capital_invested
+                fetchPredictions();
+            } else {
+                alert(`Error updating portfolio: ${result.error}`);
+            }
+        } catch (error) {
+            console.error('Error updating portfolio value:', error);
+            alert('Failed to update portfolio value. Please try again.');
+        }
+    });
+</script>
+
+
+{% endblock %}

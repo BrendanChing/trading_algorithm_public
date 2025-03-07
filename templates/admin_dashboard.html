@@ -1,0 +1,50 @@
+<h1>Admin Dashboard</h1>
+
+<h2>Add User</h2>
+<form action="/admin/add_user" method="POST">
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <select name="role">
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+    </select>
+    <button type="submit">Add User</button>
+</form>
+
+<h2>Manage Users</h2>
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user[0] }}</td>
+            <td>{{ user[1] }}</td>
+            <td>{{ user[2] }}</td>
+            <td>
+                <form action="/admin/delete_user/{{ user[0] }}" method="POST" style="display:inline;">
+                    <button type="submit">Delete</button>
+                </form>
+                <form action="/admin/update_role/{{ user[0] }}" method="POST" style="display:inline;">
+                    <select name="role">
+                        <option value="user" {% if user[2] == 'user' %}selected{% endif %}>User</option>
+                        <option value="admin" {% if user[2] == 'admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                    <button type="submit">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<form action="/send_notification" method="POST"></form>
+    <input type="text" name="message" placeholder="Notification message">
+    <button type="submit">Send Notification</button>
+</form>

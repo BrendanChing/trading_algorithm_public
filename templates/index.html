@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Home</h1>
+    <h3>Date: {{ buy[0][2] if buy else sell[0][2] if sell else 'N/A' }}</h3>
+    <h3>Time: {{ buy[0][3] if buy else sell[0][3] if sell else 'N/A' }}</h3>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Buy</h2>
+            <ul>
+                {% for stock in buy %}
+                    <li>{{ stock[0] }}: {{ stock[1] | round(2) }}</li>
+                {% endfor %}
+            </ul>
+
+            <h2>Sell</h2>
+            <ul>
+                {% for stock in sell %}
+                    <li>{{ stock[0] }}: {{ stock[1] | round(2) }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="col-md-6">
+            <h2>Your Trades</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Prediction</th>
+                        <th>Stop Loss</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trade in trades %}
+                    <tr>
+                        <td>{{ trade.symbol }}</td>
+                        <td>{{ trade.prediction | round(2) if trade.prediction else 'N/A' }}</td>
+                        <td>{{ trade.stop_loss | round(2) if trade.stop_loss else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h2>New Trade</h2>
+            <form id="new-trade-form" action="/add_trade" method="POST">
+                <input type="text" name="symbol" placeholder="Enter stock symbol" required>
+                <button type="submit">Add Trade</button>
+            </form>
+
+            <form action="/remove_trade" method="post" style="display: inline-block;">
+                <input type="text" name="symbol" placeholder="Enter Stock Symbol" required>
+                <button type="submit" class="btn btn-danger">Remove Trade</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="/static/main.js"></script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>15-Minute Stock Predictions</h1>
+
+<form id="portfolio-form" method="POST" action="/update-portfolio">
+    <label for="portfolio_input">Enter Total Portfolio Value:</label>
+    <input type="number" id="portfolio_input" name="portfolio_value" step="0.1" required>
+    <button type="submit">Update</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Open Price</th>
+            <th>Prediction</th>
+            <th>Stop Loss</th>
+            <th>Take Profit</th>
+        </tr>
+    </thead>
+    <tbody id="predictions-15min-table"></tbody>
+</table>
+<p id="loading-indicator-15min" style="display: none;">Loading...</p> <!-- Optional Loading Indicator -->
+
+<script>
+    async function fetchPredictions15Min() {
+        const loadingIndicator = document.getElementById('loading-indicator-15min');
+        loadingIndicator.style.display = 'block'; // Show the loading indicator
+
+        try {
+            const response = await fetch('/predictions_15min');
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+
+            const tableBody = document.getElementById('predictions-15min-table');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            data.forEach(prediction => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${prediction.symbol}</td>
+                    <td>${prediction.date}</td>
+                    <td>${prediction.time}</td>
+                    <td>${prediction.open_price.toFixed(2)}</td>
+                    <td>${prediction.prediction.toFixed(3)}</td>
+                    <td>${prediction.stop_loss.toFixed(2)}</td>
+                    <td>${prediction.take_profit.toFixed(2)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error fetching 15-minute predictions:', error);
+            alert('Failed to fetch 15-minute predictions. Please try again later.');
+        } finally {
+            loadingIndicator.style.display = 'none'; // Hide the loading indicator
+        }
+    }
+
+    // Fetch 15-minute predictions immediately and refresh every 2 seconds
+    fetchPredictions15Min();
+    setInterval(fetchPredictions15Min, 1000); // Refresh every 2 seconds
+
+    // Handle portfolio value update
+    document.getElementById('portfolio-form').addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent the page from refreshing
+
+        const portfolioValue = document.getElementById('portfolio_input').value;
+        if (!portfolioValue || portfolioValue <= 0) {
+            alert("Please enter a valid portfolio value.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/update-portfolio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ total_portfolio: portfolioValue })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert(`Portfolio value updated to $${result.total_portfolio}`);
+                // Re-fetch predictions to reflect updated capital_invested
+                fetchPredictions15Min();
+            } else {
+                alert(`Error updating portfolio: ${result.error}`);
+            }
+        } catch (error) {
+            console.error('Error updating portfolio value:', error);
+            alert('Failed to update portfolio value. Please try again.');
+        }
+    });
+</script>
+
+{% endblock %}
