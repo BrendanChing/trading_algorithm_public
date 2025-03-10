@@ -29,6 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuration Variables
+DATABASE_URL = os.getenv('DATABASE_URL')
 FMP_BASE_URL = "https://financialmodelingprep.com/api/v3"
 FMP_API_KEY = os.environ.get("FMP_API_KEY", "")
 LIVE_TABLE = "live_15min"
@@ -46,7 +47,7 @@ SYMBOLS = [
 MODEL_PATH = "xgboost_15min_more.json"
 
 # Database Path
-DB_PATH = "stock_data.db"
+DB_PATH = DATABASE_URL
 
 excluded_symbols = []
 

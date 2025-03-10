@@ -9,17 +9,6 @@ from flask import send_from_directory
 import psycopg2
 import os
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-cur = conn.cursor()
-
-cur.execute("SELECT NOW()")
-print(cur.fetchone())
-
-cur.close()
-conn.close()
-
 app = Flask(__name__)
 app.secret_key = os.getenv('APP_SECRET_KEY')  # Required for flash messages
 
