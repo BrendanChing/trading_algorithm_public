@@ -5,3 +5,4 @@ simulations/
 stock_data.db
 xgboost_15min_more.json
 create_simulation_table.py
+.env

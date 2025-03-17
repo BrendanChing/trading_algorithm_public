@@ -1,79 +1,77 @@
 import os
 import sqlite3
-import psycopg2
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from a .env file if available
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# --- Step 1: Connect to SQLite and retrieve data ---
+# --- Step 1: Connect to SQLite and retrieve data from the 'features' table ---
 
 # Path to your SQLite database file
-SQLITE_DB_PATH = 'stock_data.db'  # adjust if needed
+SQLITE_DB_PATH = 'stock_data.db'  # Adjust if needed
 
 try:
-    sqlite_conn = sqlite3.connect(SQLITE_DB_PATH)
-    sqlite_cursor = sqlite_conn.cursor()
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    cursor = conn.cursor()
     logger.info("Connected to SQLite database.")
-
-    # Query the features table for distinct rows
-    sqlite_cursor.execute("""
+    
+    # Query the features table for distinct rows with valid numeric values
+    cursor.execute("""
         SELECT DISTINCT symbol, symbol_numeric, symbol_numeric_normalized 
         FROM features
+        WHERE symbol_numeric IS NOT NULL AND symbol_numeric_normalized IS NOT NULL
     """)
-    rows = sqlite_cursor.fetchall()
+    rows = cursor.fetchall()
     logger.info(f"Fetched {len(rows)} rows from SQLite 'features' table.")
+    
+    # Debug: Print the first 5 rows to inspect data
+    logger.info(f"First 5 rows: {rows[:5]}")
 except Exception as e:
     logger.error(f"Error connecting to SQLite: {e}")
     raise
 finally:
-    sqlite_conn.close()
+    conn.close()
 
-
-# --- Step 2: Connect to PostgreSQL and create/update the table ---
-
-# Get PostgreSQL connection string from environment variables
-DATABASE_URL = os.getenv('DATABASE_URL')
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable not set!")
+# --- Step 2: Create a new table in SQLite and insert/update the data ---
 
 try:
-    pg_conn = psycopg2.connect(DATABASE_URL)
-    pg_cursor = pg_conn.cursor()
-    logger.info("Connected to PostgreSQL database.")
-
-    # Create a new table for the features data (if it doesn't already exist)
-    # Here we name it 'features_pg'; adjust the table name as needed.
-    pg_cursor.execute("""
-        CREATE TABLE IF NOT EXISTS features_pg (
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    cursor = conn.cursor()
+    
+    # Create a new table for the symbol numeric values (if it doesn't already exist)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS symbol_numeric_sqlite (
             symbol TEXT PRIMARY KEY,
             symbol_numeric INTEGER,
             symbol_numeric_normalized REAL
         )
     """)
-    pg_conn.commit()
-    logger.info("Created table 'features_pg' (if not existing).")
-
-    # Insert or update rows from SQLite into PostgreSQL.
-    # Using an UPSERT so that if the symbol already exists, we update its values.
+    conn.commit()
+    logger.info("Created table 'symbol_numeric_sqlite' (if not existing).")
+    
+    # Insert or update rows from the features table using SQLite UPSERT syntax
     for row in rows:
         symbol, symbol_numeric, symbol_numeric_normalized = row
-        pg_cursor.execute("""
-            INSERT INTO features_pg (symbol, symbol_numeric, symbol_numeric_normalized)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (symbol) DO UPDATE
-            SET symbol_numeric = EXCLUDED.symbol_numeric,
-                symbol_numeric_normalized = EXCLUDED.symbol_numeric_normalized
+        cursor.execute("""
+            INSERT INTO symbol_numeric_sqlite (symbol, symbol_numeric, symbol_numeric_normalized)
+            VALUES (?, ?, ?)
+            ON CONFLICT(symbol) DO UPDATE SET 
+                symbol_numeric = excluded.symbol_numeric,
+                symbol_numeric_normalized = excluded.symbol_numeric_normalized
         """, (symbol, symbol_numeric, symbol_numeric_normalized))
     
-    pg_conn.commit()
-    logger.info("Inserted/updated all rows into 'features_pg'.")
+    conn.commit()
+    logger.info("Inserted/updated all rows into 'symbol_numeric_sqlite'.")
 except Exception as e:
-    logger.error(f"Error working with PostgreSQL: {e}")
+    logger.error(f"Error working with SQLite for new table: {e}")
     raise
 finally:
-    if pg_cursor:
-        pg_cursor.close()
-    if pg_conn:
-        pg_conn.close()
+    if cursor is not None:
+        cursor.close()
+    if conn is not None:
+        conn.close()
